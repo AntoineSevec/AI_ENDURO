@@ -82,9 +82,9 @@ model.add(tf.keras.layers.MaxPool2D(
 model.add(Flatten())
 
 model.add(Dense(units=300, activation='relu'))
-#model.add(Dense(units=200, activation='relu'))
+model.add(Dense(units=200, activation='relu'))
 #model.add(Dense(units=100, activation='sigmoid'))
-model.add(Dense(units=1, activation='softmax'))
+model.add(Dense(units=size_of_label, activation='softmax'))
 opt = tf.keras.optimizers.Adam(learning_rate=0.8*10e-4)  #change learning rate here
 model.summary()
 model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['categorical_accuracy'])
@@ -120,26 +120,22 @@ print(tf.math.confusion_matrix(y_test.argmax(axis=1), pred_test.argmax(axis=1)))
 #%%
 import gym
 import pygame
-env = gym.make('Pong-v4')
+env = gym.make('Enduro-v0')
 fps=30
-max_iteration = 500   # ~=10 games
+max_iteration = 300   # ~=10 games
 
 def action_mapping(array):
-    i = np.argmax(array[0])
-    if i==0:
-        return 0
-    if i==1:
-        return 2
-    if i==2:
-        return 3
-obs = env.reset()[34:194:4, 12:148:2, 1].reshape(1,68,40,1)
+    i = np.nonzero(array)[0][0] #return the index of the action
+    return i
+
+obs = env.reset()[55:155:2, 20:160:2, 1].reshape(1,size_of_input[0],size_of_input[1],1)
 action = 0 # first action = 0
-size_of_input[0],size_of_input[1]
+#size_of_input[0],size_of_input[1]
 
 for t in range(max_iteration):
     env.render()
     obs,rew,d,inf=env.step(action) # take a predicted action
-    obs = obs[34:194:4, 12:148:2, 1].reshape(1,size_of_input[0],size_of_input[1],1) #reshape to fit in the input layer of model
+    obs = obs[55:155:2, 20:160:2, 1].reshape(1,size_of_input[0],size_of_input[1],1) #reshape to fit in the input layer of model
     action = action_mapping(model.predict(obs))
     if rew != 0:
         print("reward: ", rew)
