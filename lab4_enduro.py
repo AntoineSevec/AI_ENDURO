@@ -33,9 +33,9 @@ def mycallback(obs_t, obs_tp1, action, rew, done, info):
     print("action = ", action, " reward = ", rew, "done = ", done)
     list2 = [action]
     vector1 = np.array(list2)
-    #imageio.imwrite('outfile.png', obs_t[34:194:4, 12:148:2, 1]) #68*40=2720
+    #imageio.imwrite('outfile.png', (obs_t-obs_tp1))#[55:155:2, 20:160:2, 1])
     with open('X_enduro.txt', 'a') as outfileX:
-       np.savetxt(outfileX, delimiter=',', X=obs_t[55:155:2, 20:160:2, 1], fmt='%d')
+       np.savetxt(outfileX, delimiter=',', X=(obs_t)[55:155:2, 20:160:2, 1], fmt='%d')
     with open('Y_enduro.txt', 'a') as outfileY:
         np.savetxt(outfileY, delimiter='', X=vector1, fmt='%d')
     #return [action,]
@@ -75,24 +75,25 @@ model = Sequential()
 
 model.add(Input(shape=(size_of_input[0],size_of_input[1],1)))
 
-model.add(Conv2D(filters=1, kernel_size=(6, 6), activation='softmax',strides=(2, 2)))
+model.add(Conv2D(filters=3, kernel_size=(6, 6), activation='relu',strides=(2, 2)))
+#model.add(Conv2D(filters=3, kernel_size=(6, 6), activation='relu',strides=(1, 1)))
 model.add(tf.keras.layers.MaxPool2D(
     pool_size=(2, 2), strides=(3,3), padding='same'))
 #model.add(Conv2D(filters=1, kernel_size=(2, 2), activation='softmax',strides=(2, 2), padding='same'))
 model.add(Flatten())
-
-model.add(Dense(units=300, activation='relu'))
+#model.add(Dense(units=1000, activation='relu'))
 model.add(Dense(units=200, activation='relu'))
-#model.add(Dense(units=100, activation='sigmoid'))
-model.add(Dense(units=size_of_label, activation='softmax'))
-opt = tf.keras.optimizers.Adam(learning_rate=0.8*10e-4)  #change learning rate here
+model.add(Dense(units=100, activation='relu'))
+model.add(Dense(units=10, activation='sigmoid'))
+model.add(Dense(units=size_of_label, activation='sigmoid'))
+opt = tf.keras.optimizers.Adam(learning_rate=1*10e-4)  #change learning rate here
 model.summary()
 model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['categorical_accuracy'])
 
-#train the model
+#%%train the model
 
-history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
-
+history = model.fit(x_train, y_train, epochs=50, validation_data=(x_test, y_test))
+zz=model.predict(x_test) #see the prediction
 #%% plot the result
 '''
 import matplotlib.pyplot as plt
@@ -117,29 +118,48 @@ print(tf.math.confusion_matrix(y_test.argmax(axis=1), pred_test.argmax(axis=1)))
 # use model.predict() to get the prediction from input
 #zz=model.predict(x_test)
 '''
-#%%
+#model.save('enduro_game1.h5')
+
+#model=tf.keras.models.load_model('enduro_game1.h5')
+#%% run the agent
 import gym
 import pygame
 env = gym.make('Enduro-v0')
-fps=30
-max_iteration = 300   # ~=10 games
+fps=30 #30 frame per second is default ratio
+max_iteration = 300
+size_of_input = [70,50]
+zoom = 4
+#size_of_label = 9
 
 def action_mapping(array):
-    i = np.nonzero(array)[0][0] #return the index of the action
+    #i = np.nonzero(array)[0][0] #return the index of the action
+    i = np.argmax(array)
     return i
 
 obs = env.reset()[55:155:2, 20:160:2, 1].reshape(1,size_of_input[0],size_of_input[1],1)
-action = 0 # first action = 0
+action = np.array([1]) # first action = 0
 #size_of_input[0],size_of_input[1]
 
-for t in range(max_iteration):
+for t in range(max_iteration): #the part of prediction is slow due to the tensor operation
+#while(1):
     env.render()
-    obs,rew,d,inf=env.step(action) # take a predicted action
+    if action[t] !=0:
+        print("action:",action[t])    
+    obs,rew,d,inf=env.step(action[t]) # take a predicted action
     obs = obs[55:155:2, 20:160:2, 1].reshape(1,size_of_input[0],size_of_input[1],1) #reshape to fit in the input layer of model
-    action = action_mapping(model.predict(obs))
+    action = np.append(action,action_mapping(model.predict(obs)))
     if rew != 0:
         print("reward: ", rew)
-    #print("action:",action,)
     #pygame.time.Clock().tick(fps)
 env.close()
 
+#%% 
+env.reset()
+for t in range(max_iteration): #the part of prediction is slow due to the tensor operation
+#while(1):
+    env.render()
+    obs,rew,d,inf=env.step(action[t]) # take a predicted action
+    if rew != 0:
+        print("reward: ", rew)
+    pygame.time.Clock().tick(fps)
+env.close()
