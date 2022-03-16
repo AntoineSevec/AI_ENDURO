@@ -11,3 +11,17 @@ I can think of other solutions to keep the car in lane and get more points, But 
 * Start your report with a general overview of your setting, summary of what has been done, and main conclusions, BEFORE digging into the details.
 
 * Do not forget to write your names in the beginning of your reports / code / notebooks.
+
+## The model
+
+Sequential
+
+The topology :
+
+* 1st layer : A convulutional 2 D layer
+* 2nd layer : A Max Pooling 2 D layer
+* 3rd layer : Flatten layer
+* 4th layer : Dense layer with reLu activation 200 units
+* 5th layer : Dense layer with reLu activation 100 units
+* 6th layer : Dense layer with sigmoid activation 10 units
+* 7th layer : Dense layer with sigmoid activation 10 units
