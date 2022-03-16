@@ -44,7 +44,7 @@ def mycallback(obs_t, obs_tp1, action, rew, done, info):
 
 env = gym.make("Enduro-v0")
 
-play(env, zoom=4, fps=30, callback=mycallback)
+play(env, zoom=3, fps=30, callback=mycallback)
 env.close()
 
 #%% load the dataset
